@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BtSppComm</string>
+    <string name="service_name">BtSppCommService</string>
+</resources>
