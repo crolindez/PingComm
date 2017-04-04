@@ -4,10 +4,9 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/PingComm.iml" filepath="$PROJECT_DIR$/PingComm.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/bta2dpcomm/bta2dpcomm.iml" filepath="$PROJECT_DIR$/bta2dpcomm/bta2dpcomm.iml" />
       <module fileurl="file://$PROJECT_DIR$/btcomm/btcomm.iml" filepath="$PROJECT_DIR$/btcomm/btcomm.iml" />
-      <module fileurl="file://$PROJECT_DIR$/btsppcomm/btsppcomm.iml" filepath="$PROJECT_DIR$/btsppcomm/btsppcomm.iml" />
       <module fileurl="file://$PROJECT_DIR$/rfcomm/rfcomm.iml" filepath="$PROJECT_DIR$/rfcomm/rfcomm.iml" />
+      <module fileurl="file://$PROJECT_DIR$/wificomm/wificomm.iml" filepath="$PROJECT_DIR$/wificomm/wificomm.iml" />
     </modules>
   </component>
 </project>

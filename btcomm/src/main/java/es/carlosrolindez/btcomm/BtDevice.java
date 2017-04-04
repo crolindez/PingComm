@@ -14,7 +14,7 @@ public class BtDevice extends RfDevice<BluetoothDevice> implements Parcelable{
     public boolean deviceBonded;
 
     public BtDevice(String name, BluetoothDevice device) {
-        super(name,device);
+        super(name,device,0);
         deviceBonded = (device.getBondState()!=BOND_NONE);
     }
 

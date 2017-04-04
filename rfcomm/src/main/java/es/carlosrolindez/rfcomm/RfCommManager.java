@@ -3,12 +3,16 @@ package es.carlosrolindez.rfcomm;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.charset.Charset;
-
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 
 public abstract class RfCommManager<TypeRfSocket> {
@@ -29,6 +33,8 @@ public abstract class RfCommManager<TypeRfSocket> {
 
     private InputStream iStream;
     private OutputStream oStream;
+    BlockingQueue<String> mMessageQueue;
+    private final int QUEUE_CAPACITY = 5;
 
     private final LocalBroadcastManager mLocalBroadcastManager;
 
@@ -48,18 +54,19 @@ public abstract class RfCommManager<TypeRfSocket> {
         return this.connected;
     }
 
-    public void setSocket(TypeRfSocket socket,  boolean server) {
+    public void setSocket(final TypeRfSocket socket, boolean server) {
         this.socket = socket;
         this.server = server;
         iStream = getInputStream();
         oStream = getOutputStream();
-
         if ((iStream==null) || (oStream==null)) {
             stopSocket();
         }
+        mMessageQueue = new ArrayBlockingQueue<String>(QUEUE_CAPACITY);
 
         connected = true;
 
+        // reading Thread
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -88,6 +95,7 @@ public abstract class RfCommManager<TypeRfSocket> {
                         mLocalBroadcastManager.sendBroadcast(intent);
                         bufferNumber++;
                     } catch (IOException e) {
+                        Log.e(TAG,"End of socket");
                         intent = new Intent(STOPPED);
                         mLocalBroadcastManager.sendBroadcast(intent);
                         RfCommManager.this.socket = null;
@@ -100,16 +108,37 @@ public abstract class RfCommManager<TypeRfSocket> {
 
         }).start();
 
+
+        // writing Thread
+        new Thread(new Runnable() {
+
+
+            @Override
+            public void run() {
+
+                while (true) {
+                    try {
+                        String msg = mMessageQueue.take();
+                        oStream.write(msg.getBytes(Charset.defaultCharset()));
+                    } catch (InterruptedException ie) {
+                        Log.e(TAG, "Message sending loop interrupted, exiting");
+                        stopSocket();
+                    } catch (IOException e) {
+                        stopSocket();
+                    }
+                }
+            }
+        }).start();
+
     }
 
     public void write(String buffer) {
         try {
-
-            oStream.write(buffer.getBytes(Charset.defaultCharset()));
-            oStream.flush();
-        } catch (IOException e) {
-            stopSocket();
+            mMessageQueue.put(buffer);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+
     }
 
     public void stopSocket() {

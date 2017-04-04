@@ -1,4 +1,4 @@
-package es.carlosrolindez.bta2dpcomm;
+package es.carlosrolindez.btcomm.bta2dpcomm;
 
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothAdapter;

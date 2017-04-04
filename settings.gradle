@@ -1,1 +1,1 @@
-include ':app', ':rfcomm', ':btcomm', ':btsppcomm', ':bta2dpcomm'
+include ':app', ':wificomm', ':rfcomm', ':btcomm'

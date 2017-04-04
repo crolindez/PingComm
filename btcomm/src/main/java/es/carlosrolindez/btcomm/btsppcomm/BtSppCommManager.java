@@ -1,4 +1,4 @@
-package es.carlosrolindez.btsppcomm;
+package es.carlosrolindez.btcomm.btsppcomm;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;

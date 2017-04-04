@@ -1,9 +1,9 @@
-package es.carlosrolindez.btsppcomm;
+package es.carlosrolindez.btcomm.btsppcomm;
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 
 import java.io.IOException;
 
@@ -16,13 +16,20 @@ public class BtSppServerManager extends RfServerManager<BluetoothSocket,Bluetoot
 
     private static final String CRService = "es.carlosrolindez.btcomm";
 
-    public BtSppServerManager(BtSppCommManager commManager) {
-        super(commManager);
+    private BluetoothAdapter mBluetoothAdapter;
+
+    public BtSppServerManager(Context context, BtSppCommManager commManager) {
+        super(context,commManager);
     }
 
+    @Override
+    public void initializeServerManager(){
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    }
+
+    @Override
     public BluetoothServerSocket openServerSocket(){
         BluetoothServerSocket server;
-        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         try {
             server = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(CRService, BtConstants.SPP_UUID);

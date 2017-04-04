@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 
-import es.carlosrolindez.btsppcomm.BtSppCommManager;
+import es.carlosrolindez.btcomm.btsppcomm.BtSppCommManager;
 
 
 public class CommFragment extends Fragment {

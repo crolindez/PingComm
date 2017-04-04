@@ -24,8 +24,8 @@ import android.widget.Toast;
 
 import es.carlosrolindez.btcomm.BtDevice;
 import es.carlosrolindez.btcomm.BtListenerManager;
-import es.carlosrolindez.btsppcomm.BtSppClientSocket;
-import es.carlosrolindez.btsppcomm.BtSppServerManager;
+import es.carlosrolindez.btcomm.btsppcomm.BtSppClientSocket;
+import es.carlosrolindez.btcomm.btsppcomm.BtSppServerManager;
 import es.carlosrolindez.rfcomm.RfCommManager;
 
 
@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
         if (mBtSppServerService !=null) {
             return;
         }
-        mBtSppServerService = new BtSppServerManager(mCommFragment.getSppCommManager());
+        mBtSppServerService = new BtSppServerManager(getApplicationContext(), mCommFragment.getSppCommManager());
         mBtSppServerService.startService();
     }
 
