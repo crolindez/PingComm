@@ -337,6 +337,7 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
             }
         });
 
+        mBtListenerManager.knownBtDevices();
         mBtListenerManager.searchBtDevices();
 
     }
