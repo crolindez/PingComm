@@ -4,7 +4,6 @@ package es.carlosrolindez.wificomm;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.util.Log;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -36,7 +35,6 @@ public class WiFiServerManager extends RfServerManager<Socket,ServerSocket> {
         try {
             server = new ServerSocket(0);
         } catch (IOException e) {
-            Log.e(TAG, "Error creating ServerSocket: ", e);
             e.printStackTrace();
         }
         initializeRegistrationListener();
@@ -49,7 +47,6 @@ public class WiFiServerManager extends RfServerManager<Socket,ServerSocket> {
         Socket socket;
         try {
             socket = server.accept();
-            Log.e(TAG, "Connected as Server to " + socket.getInetAddress().getHostName() + ":" + socket.getPort());
 /*            if (mChatClient == null) {
                 int port = mSocket.getPort();
                 InetAddress address = mSocket.getInetAddress();
@@ -70,7 +67,6 @@ public class WiFiServerManager extends RfServerManager<Socket,ServerSocket> {
             e.printStackTrace();
         }
 //TODO
-        Log.e(TAG, "unregistering listener");
         if (mNsdManager!=null) {
             mNsdManager.unregisterService(mRegistrationListener);
         }
@@ -81,22 +77,18 @@ public class WiFiServerManager extends RfServerManager<Socket,ServerSocket> {
 
             @Override
             public void onServiceRegistered(NsdServiceInfo serviceInfo) {
-                Log.e(TAG,"Service Registered: " + serviceInfo.getServiceName());
             }
 
             @Override
             public void onRegistrationFailed(NsdServiceInfo serviceInfo, int arg1) {
-                Log.e(TAG,"Service Registering failed: " + serviceInfo.getServiceName());
             }
 
             @Override
             public void onServiceUnregistered(NsdServiceInfo serviceInfo) {
-                Log.e(TAG,"Service Unregistered: " + serviceInfo.getServiceName());
             }
 
             @Override
             public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                Log.e(TAG,"Service Unregistering failed: " + serviceInfo.getServiceName());
             }
         };
     }

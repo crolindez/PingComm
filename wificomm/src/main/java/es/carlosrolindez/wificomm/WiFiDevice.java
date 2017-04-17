@@ -2,9 +2,7 @@ package es.carlosrolindez.wificomm;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -49,7 +47,6 @@ public class WiFiDevice extends RfDevice<InetAddress> implements Parcelable{
             try {
                 inetAddress = InetAddress.getByAddress(ipAddress);
             } catch (UnknownHostException e) {
-                Log.e(TAG, "Error creating ServerSocket: ", e);
                 e.printStackTrace();
             }
             String name = parcel.readString();

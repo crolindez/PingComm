@@ -2,8 +2,6 @@ package es.carlosrolindez.wificomm;
 
 
 
-import android.util.Log;
-
 import java.io.IOException;
 import java.net.Socket;
 
@@ -30,7 +28,6 @@ public class WiFiClientSocket extends RfClientSocket<Socket,WiFiDevice> {
     }
 
     protected void connectSocket() {
-        Log.e(TAG, "Connected as client to " + mSocket.getInetAddress().getHostName() + ":" + mSocket.getPort());
         mCommManager.setSocket(mSocket,false);
     }
 }

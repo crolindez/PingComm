@@ -1,7 +1,6 @@
 package es.carlosrolindez.wificomm;
 
 import android.content.Context;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +45,6 @@ public class WiFiCommManager extends RfCommManager<Socket> {
     @Override
     public void closeSocket() {
         try {
-            Log.e(TAG,"Socket closed");
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
