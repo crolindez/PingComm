@@ -17,6 +17,14 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    productFlavors {
+        Bt {
+            applicationIdSuffix ".Bt"
+        }
+        WiFi {
+            applicationIdSuffix ".WiFi"
+        }
+    }
 }
 
 dependencies {
@@ -26,4 +34,5 @@ dependencies {
     compile 'com.android.support:support-v4:25.3.1'
     compile project(':btcomm')
     compile project(':rfcomm')
+    compile project(path: ':wificomm')
 }
