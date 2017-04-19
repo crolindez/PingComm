@@ -38,7 +38,8 @@ public class WiFiServerManager extends RfServerManager<Socket,ServerSocket> {
             e.printStackTrace();
         }
         initializeRegistrationListener();
-        registerService(server.getLocalPort());
+        if (server!=null)
+            registerService(server.getLocalPort());
         return server;
 
     }

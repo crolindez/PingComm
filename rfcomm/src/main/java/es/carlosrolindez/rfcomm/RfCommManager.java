@@ -8,8 +8,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -62,7 +60,7 @@ public abstract class RfCommManager<TypeRfSocket> {
         if ((iStream==null) || (oStream==null)) {
             stopSocket();
         }
-        mMessageQueue = new ArrayBlockingQueue<String>(QUEUE_CAPACITY);
+        mMessageQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
 
         connected = true;
 

@@ -14,7 +14,7 @@ public class WiFiListenerManager extends RfListenerManager<WiFiDevice,WiFiListen
 
     public enum WiFiEvent { CONNECTED, DISCONNECTED }
 
-    private NsdManager mNsdManager;
+    private final NsdManager mNsdManager;
     private NsdManager.DiscoveryListener mDiscoveryListener;
 
 
@@ -66,7 +66,7 @@ public class WiFiListenerManager extends RfListenerManager<WiFiDevice,WiFiListen
 
 
             @Override
-            public void onServiceLost(NsdServiceInfo service) {;
+            public void onServiceLost(NsdServiceInfo service) {
             }
 
             @Override
