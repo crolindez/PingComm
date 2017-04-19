@@ -4,10 +4,10 @@ package es.carlosrolindez.rfcomm;
 public abstract class RfDevice<TypeRfDevice> {
     private static String TAG = "TypeRfDevice";
 
-    public final String deviceName;
+    public String deviceName;
 
     public final TypeRfDevice mDevice;
-    public final int mPort;
+    public int mPort;
     public boolean deviceConnected;
 
     protected RfDevice(String name, TypeRfDevice device, int port) {
