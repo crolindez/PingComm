@@ -3,7 +3,6 @@ package es.carlosrolindez.rfcomm;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,7 +92,6 @@ public abstract class RfCommManager<TypeRfSocket> {
                         mLocalBroadcastManager.sendBroadcast(intent);
                         bufferNumber++;
                     } catch (IOException e) {
-                        Log.e(TAG,"End of socket");
                         intent = new Intent(STOPPED);
                         mLocalBroadcastManager.sendBroadcast(intent);
                         RfCommManager.this.socket = null;
@@ -118,10 +116,7 @@ public abstract class RfCommManager<TypeRfSocket> {
                     try {
                         String msg = mMessageQueue.take();
                         oStream.write(msg.getBytes(Charset.defaultCharset()));
-                    } catch (InterruptedException ie) {
-                        Log.e(TAG, "Message sending loop interrupted, exiting");
-                        stopSocket();
-                    } catch (IOException e) {
+                    } catch (InterruptedException | IOException ie) {
                         stopSocket();
                     }
                 }

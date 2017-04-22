@@ -26,6 +26,7 @@ public class ArrayBtDevice extends ArrayList<BtDevice> implements Parcelable{
 		add(newDevice);
 	}
 
+
 	@Override
 	public int describeContents() {
 		return 0;

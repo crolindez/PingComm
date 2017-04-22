@@ -9,7 +9,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.util.Log;
 
 import java.util.List;
 
@@ -54,32 +53,25 @@ public class BtA2dpConnectionManager {
         mContext.unregisterReceiver(mReceiver);
     }
 
-    public void connectBluetoothA2dp(BluetoothDevice device) {
-
-        if (a2dpProxy != null) {
-            try {
-                a2dpProxy.getClass()
-                        .getMethod("connect", BluetoothDevice.class)
-                        .invoke(a2dpProxy, device);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void disconnectBluetoothA2dp() {
-
-        if (a2dpProxy != null) {
-            List<BluetoothDevice> a2dpConnectedDevices = a2dpProxy.getConnectedDevices();
-            if (a2dpConnectedDevices.size() != 0) {
-                for (BluetoothDevice device : a2dpConnectedDevices) {
+    public void toggleBluetoothA2dp(BluetoothDevice device) {
+        if (device.getBondState() != BluetoothDevice.BOND_BONDED)
+            device.createBond();
+        else {
+            if (a2dpProxy!=null) {
+                // First: disconnection if necessary
+                List<BluetoothDevice> a2dpConnectedDevices = a2dpProxy.getConnectedDevices();
+                if (a2dpConnectedDevices.size() != 0) {
+                    for (BluetoothDevice localDevice : a2dpConnectedDevices) { // only one device can be connected
+                        disconnectBluetoothA2dp(localDevice);
+                        if (localDevice.getAddress().equals(device.getAddress()))
+                            // current device was connectec:  toggle means disconnect
+                            return;
+                    }
+                }
+                //second: A2dp connection to the new device
+                if (a2dpProxy != null) {
                     try {
-                        a2dpProxy.getClass()
-                                .getMethod("disconnect", BluetoothDevice.class)
-                                .invoke(a2dpProxy, device);
-
-
+                        a2dpProxy.getClass().getMethod("connect", BluetoothDevice.class).invoke(a2dpProxy, device);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -88,14 +80,76 @@ public class BtA2dpConnectionManager {
         }
     }
 
+    public void connectBluetoothA2dp(BluetoothDevice device) {
+        if (device.getBondState() != BluetoothDevice.BOND_BONDED)
+            device.createBond();
+        else {
+            if (a2dpProxy!=null) {
+                // First: disconnection from old A2dp Device
+                List<BluetoothDevice> a2dpConnectedDevices = a2dpProxy.getConnectedDevices();
+                if (a2dpConnectedDevices.size() != 0) { // only one device can be connected
+                    for (BluetoothDevice localDevice : a2dpConnectedDevices) {
+                        if (localDevice.getAddress().equals(device.getAddress()))
+                            // If already connected, return
+                            return;
+                        else
+                            disconnectBluetoothA2dp(localDevice);
+                    }
+                }
+                //second: A2dp connection to new device
+                if (a2dpProxy != null) {
+                    try {
+                        a2dpProxy.getClass().getMethod("connect", BluetoothDevice.class).invoke(a2dpProxy, device);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
 
+            }
+        }
+    }
+
+    public void disconnectAnyBluetoothA2dp() {
+
+        if (a2dpProxy != null) {
+            List<BluetoothDevice> a2dpConnectedDevices = a2dpProxy.getConnectedDevices();
+            if (a2dpConnectedDevices.size() != 0) {
+                for (BluetoothDevice device : a2dpConnectedDevices) {
+                    disconnectBluetoothA2dp(device);
+                }
+            }
+        }
+    }
+
+    public void disconnectBluetoothA2dp(BluetoothDevice device) {
+        if (a2dpProxy != null) {
+            try {
+                a2dpProxy.getClass().getMethod("disconnect", BluetoothDevice.class).invoke(a2dpProxy, device);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    public void unbondBluetoothA2dp(BluetoothDevice device) {
+        if (a2dpProxy != null) {
+            if (device.getBondState() == BluetoothDevice.BOND_BONDED) {
+                try {
+                    device.getClass().getMethod("removeBond", (Class[]) null).invoke(device, (Object[]) null);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+    }
 
     private final BluetoothProfile.ServiceListener mA2dpProfileListener = new BluetoothProfile.ServiceListener() {
 
         public void onServiceConnected(int profile, BluetoothProfile proxy) {
 
             if (profile == BluetoothProfile.A2DP) {
-                Log.e(TAG,"Proxy A2dp Connected");
                 a2dpProxy = (BluetoothA2dp) proxy;
 
                 //Just to see if some A2dp is still connected
@@ -113,7 +167,6 @@ public class BtA2dpConnectionManager {
         public void onServiceDisconnected(int profile) {
 
             if (profile == BluetoothProfile.A2DP) {
-                Log.e(TAG,"Proxy A2dp Disconnected");
                 if (mBtA2dProxyListener != null)
                     mBtA2dProxyListener.notifyBtA2dpEvent(null,BtA2dpEvent.DISCONNECTED);
             }
@@ -125,17 +178,11 @@ public class BtA2dpConnectionManager {
         public void onServiceConnected(int profile, BluetoothProfile proxy) {
 
             if (profile == BluetoothProfile.HEADSET) {
-                Log.e(TAG,"Proxy Headset Connected");
                 headsetProxy = (BluetoothHeadset) proxy;
-
             }
         }
 
         public void onServiceDisconnected(int profile) {
-
-            if (profile == BluetoothProfile.HEADSET) {
-                Log.e(TAG,"Proxy Headset Disconnected");
-            }
         }
     };
 
@@ -146,11 +193,9 @@ public class BtA2dpConnectionManager {
         public void onReceive(Context ctx, Intent intent) {
             String action = intent.getAction();
             BluetoothDevice device;
-            Log.e(TAG, "receive intent for action : " + action);
             switch (action) {
                 case BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED: {
                     int state = intent.getIntExtra(BluetoothA2dp.EXTRA_STATE, BluetoothA2dp.STATE_DISCONNECTED);
-                    Log.e(TAG, "CONNECTION_STATE_CHANGED : " + state);
 
                     if (state == BluetoothA2dp.STATE_CONNECTED) {
                         device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
@@ -166,27 +211,14 @@ public class BtA2dpConnectionManager {
                 }
                 case BluetoothA2dp.ACTION_PLAYING_STATE_CHANGED: {
                     int state = intent.getIntExtra(BluetoothA2dp.EXTRA_STATE, BluetoothA2dp.STATE_NOT_PLAYING);
-                    Log.e(TAG, "PLAYING_STATE_CHANGED : " + state);
- /*               if (state == BluetoothA2dp.STATE_PLAYING) {
-                    Log.d(TAG, "A2DP start playing");
-                    Toast.makeText(A2DPActivity.this, "A2dp is playing", Toast.LENGTH_SHORT).show();
-                } else {
-                    Log.d(TAG, "A2DP stop playing");
-                    Toast.makeText(A2DPActivity.this, "A2dp is stopped", Toast.LENGTH_SHORT).show();
-                }*/
                     break;
                 }
                 case BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED: {
                     int state = intent.getIntExtra(BluetoothHeadset.EXTRA_STATE, BluetoothHeadset.STATE_DISCONNECTED);
-                    Log.e(TAG, "HEADSET CONNECTION_STATE_CHANGED : " + state);
                     if (headsetProxy != null) {
-                    /*if (state==BluetoothHeadset.STATE_DISCONNECTING) */
-                        {
-                            device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                            Log.e(TAG, "HEADSET trying to stop");
-                            disconnectBluetoothHeadset(device);
-                            mBtA2dProxyListener.notifyBtA2dpEvent(device, BtA2dpEvent.CONNECTED);
-                        }
+                        device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                        disconnectBluetoothHeadset(device);
+                        mBtA2dProxyListener.notifyBtA2dpEvent(device, BtA2dpEvent.CONNECTED);
                     }
                     break;
                 }
@@ -207,7 +239,7 @@ public class BtA2dpConnectionManager {
         }
     }
 
-    public void disconnectBluetoothHeadset(BluetoothDevice device) {
+    private void disconnectBluetoothHeadset(BluetoothDevice device) {
         if (headsetProxy != null) {
 
             try {

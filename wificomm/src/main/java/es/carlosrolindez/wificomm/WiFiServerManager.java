@@ -67,7 +67,6 @@ public class WiFiServerManager extends RfServerManager<Socket,ServerSocket> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//TODO
         if (mNsdManager!=null) {
             mNsdManager.unregisterService(mRegistrationListener);
         }

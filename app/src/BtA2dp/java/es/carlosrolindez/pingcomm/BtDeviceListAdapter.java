@@ -3,13 +3,18 @@ package es.carlosrolindez.pingcomm;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import es.carlosrolindez.btcomm.BtDevice;
+import es.carlosrolindez.btcomm.bta2dpcomm.BtA2dpConnectionManager;
 
 
 class BtDeviceListAdapter extends BaseAdapter {
@@ -17,12 +22,21 @@ class BtDeviceListAdapter extends BaseAdapter {
 
 	private final LayoutInflater inflater;
 	private final ArrayBtDevice mBtDeviceList;
+    private final Context mContext;
+    private final BtA2dpConnectionManager mA2dpManager;
+
+    private boolean viewLocked = false;
+    private int numViewLocked = 0;
+    private RelativeLayout lockedLayout = null;
+    private ImageView lockedButton = null;
 
 	
-	public BtDeviceListAdapter(Context context, ArrayBtDevice deviceList)
+	public BtDeviceListAdapter(Context context, ArrayBtDevice deviceList, BtA2dpConnectionManager manager)
 	{
 		mBtDeviceList = deviceList;
 		inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mContext = context;
+        mA2dpManager = manager;
 	}
 	
 	@Override
@@ -65,29 +79,246 @@ class BtDeviceListAdapter extends BaseAdapter {
 			localView = inflater.inflate(R.layout.device_list_row, parent, false);
 		}
 
-
 		TextView deviceName = (TextView)localView.findViewById(R.id.device_name);
 		TextView deviceAddress = (TextView)localView.findViewById(R.id.device_address);
-		RelativeLayout layout = (RelativeLayout)localView.findViewById(R.id.device_list_layout);
-
-		
+		RelativeLayout mainLayout = (RelativeLayout)localView.findViewById(R.id.device_list_layout);
 		deviceName.setText(device.deviceName);
 		deviceAddress.setText(device.getAddress());
 
-		if (device.deviceConnected) {
-			layout.setBackgroundResource(R.drawable.connected_selector);
-		} else {
-            layout.setBackgroundResource(R.drawable.notconnected_selector);
-			if (device.deviceBonded) {
+        if (device.deviceConnected) {
+            mainLayout.setBackgroundResource(R.drawable.connected_selector);
+        } else {
+            mainLayout.setBackgroundResource(R.drawable.notconnected_selector);
+            if (device.deviceBonded) {
                 deviceName.setTypeface(Typeface.DEFAULT_BOLD);
                 deviceAddress.setTypeface(Typeface.DEFAULT_BOLD);
-			} else {
+            } else {
                 deviceName.setTypeface(Typeface.DEFAULT);
                 deviceAddress.setTypeface(Typeface.DEFAULT);
-			}
+            }
+        }
+
+        ImageView deleteButton = (ImageView) localView.findViewById(R.id.device_delete);
+        RelativeLayout deleteLayout = (RelativeLayout)localView.findViewById(R.id.delete_list_layout);
+
+        TextView password = (TextView)localView.findViewById(R.id.password);
+		password.setText(""+password(device.getAddress()));
+        localView.setOnTouchListener(new SwipeView(mainLayout, deleteLayout, (ListView) parent, device, position, deleteButton));
+		return localView;
+	}
+
+    @Override
+    public void notifyDataSetChanged() {
+        if (lockedLayout!=null) {
+            RelativeLayout.LayoutParams lockedParams = (RelativeLayout.LayoutParams) lockedLayout.getLayoutParams();
+            lockedParams.rightMargin = 0;
+            lockedParams.leftMargin = 0;
+            lockedLayout.setLayoutParams(lockedParams);
+            unlock();
+        }
+        super.notifyDataSetChanged();
+    }
+
+    private void unlock() {
+        viewLocked = false;
+        if (lockedButton!=null) lockedButton.setClickable(false);
+        lockedButton = null;
+        lockedLayout = null;
+    }
+
+    public class SwipeView implements View.OnTouchListener {
+
+        private final int mSlop;
+        private float mDownX;
+        private boolean motionInterceptDisallowed;
+
+        private final RelativeLayout mainLayout;
+        private final RelativeLayout deleteLayout;
+        private final ListView mListView;
+        private final BtDevice btDevice;
+        private final int limitWidth;
+        private final int localPosition;
+        private final ImageView mDeleteButton;
+        private final boolean moveable;
+
+
+
+
+        public SwipeView(RelativeLayout main, RelativeLayout delete, ListView list, BtDevice device, int position, ImageView deleteButton) {
+            ViewConfiguration vc = ViewConfiguration.get(mContext);
+            mSlop = vc.getScaledTouchSlop();
+            mainLayout = main;
+            deleteLayout = delete;
+            mListView = list;
+            btDevice = device;
+            localPosition = position;
+            limitWidth = (int)mContext.getResources().getDimension(R.dimen.delete_button_size);
+            mDeleteButton = deleteButton;
+            moveable = !device.deviceConnected;
+        }
+
+        private void lock() {
+            viewLocked = true;
+            numViewLocked = localPosition;
+            lockedLayout = mainLayout;
+            lockedButton = mDeleteButton;
+            lockedButton.setClickable(true);
+            lockedButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (mA2dpManager!=null) {
+                        mA2dpManager.unbondBluetoothA2dp(btDevice.mDevice);
+                        RelativeLayout.LayoutParams lockedParams = (RelativeLayout.LayoutParams) lockedLayout.getLayoutParams();
+                        lockedParams.rightMargin = 0;
+                        lockedParams.leftMargin = 0;
+                        lockedLayout.setLayoutParams(lockedParams);
+                        unlock();
+                        mBtDeviceList.remove(btDevice);
+                        notifyDataSetChanged();
+                    }
+                }
+            });
+
+        }
+
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) mainLayout.getLayoutParams();
+
+            switch (motionEvent.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                {
+                    if (viewLocked && (numViewLocked!=localPosition)) {  //undo lock
+                        RelativeLayout.LayoutParams lockedParams = (RelativeLayout.LayoutParams) lockedLayout.getLayoutParams();
+                        lockedParams.rightMargin = 0;
+                        lockedParams.leftMargin = 0;
+                        lockedLayout.setLayoutParams(lockedParams);
+                        unlock();
+                    }
+                    mDownX = motionEvent.getRawX();
+                    motionInterceptDisallowed = false;
+                    view.setPressed(true);
+                }
+
+                return true;
+
+                case MotionEvent.ACTION_MOVE:
+                {
+                    float deltaX = motionEvent.getRawX() - mDownX;
+                    if ( (Math.abs(deltaX) > mSlop) && !motionInterceptDisallowed ) {
+                        mListView.requestDisallowInterceptTouchEvent(true);
+                        motionInterceptDisallowed = true;
+                        view.setPressed(false);
+                    }
+                    if (!moveable) return true;
+
+                    if (deltaX>0) { // Right
+                        deleteLayout.setVisibility(View.VISIBLE);
+                        if (deltaX>limitWidth) {
+                            if (!viewLocked) {
+                                lock();
+                            }
+                            params.rightMargin = -limitWidth;
+                            params.leftMargin = limitWidth;
+                            mainLayout.setLayoutParams(params);
+
+                        } else {
+                            unlock();
+                            params.rightMargin = -(int) deltaX;
+                            params.leftMargin = (int) deltaX;
+                            mainLayout.setLayoutParams(params);
+                        }
+
+                    } else { // left
+                        unlock();
+                        params.rightMargin = -(int)deltaX;
+                        params.leftMargin = (int)deltaX;
+                        mainLayout.setLayoutParams(params);
+                        deleteLayout.setVisibility(View.INVISIBLE);
+                    }
+
+
+
+                    return true;
+                }
+
+                case MotionEvent.ACTION_UP:
+                {
+                    view.setPressed(false);
+
+                    if (motionInterceptDisallowed) {
+                        if (!viewLocked) {
+                            params.rightMargin = 0;
+                            params.leftMargin = 0;
+                            mainLayout.setLayoutParams(params);
+                        }
+                        mListView.requestDisallowInterceptTouchEvent(false);
+                        motionInterceptDisallowed = false;
+                    } else {
+                        params.rightMargin = 0;
+                        params.leftMargin = 0;
+                        mainLayout.setLayoutParams(params);
+                        unlock();
+                        if (mA2dpManager!=null)
+                            mA2dpManager.toggleBluetoothA2dp(btDevice.mDevice);
+                    }
+
+                    return true;
+
+                }
+
+                case MotionEvent.ACTION_CANCEL:
+                {
+                    params.rightMargin = 0;
+                    params.leftMargin = 0;
+                    mainLayout.setLayoutParams(params);
+                    unlock();
+                    mListView.requestDisallowInterceptTouchEvent(false);
+                    motionInterceptDisallowed = false;
+
+                    return false;
+
+                }
+            }
+            return true;
+        }
+
+
+    }
+
+
+
+    private long password(String MAC) {
+
+		String[] macAddressParts = MAC.split(":");
+		long littleMac = 0;
+		int rotation;
+		long code = 0;
+		long pin;
+
+		for(int i=2; i<6; i++) {
+			Long hex = Long.parseLong(macAddressParts[i], 16);
+			littleMac *= 256;
+			littleMac += hex;
 		}
 
-		return localView;
+		rotation = Integer.parseInt(macAddressParts[5], 16) & 0x0f;
+
+		for(int i=0; i<4; i++) {
+			Long hex =  Long.parseLong(macAddressParts[i], 16);
+			code *= 256;
+			code += hex;
+		}
+		code = code >> rotation;
+		code &= 0xffff;
+
+		littleMac &= 0xffff;
+
+		pin = littleMac ^ code;
+		pin %= 10000;
+
+		return pin;
+
 	}
 
 

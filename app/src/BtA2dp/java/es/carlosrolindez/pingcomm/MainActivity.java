@@ -10,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -135,8 +134,6 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
     @Override
     protected void onStop() {
         super.onStop();
-
-        Log.e(TAG,"closed a2dp manager");
         if  (mBtA2dpConnectionManager!=null) mBtA2dpConnectionManager.closeManager();
 
     }
@@ -210,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
         mBtA2dpConnectionManager.openManager();
 
         mListView = (ListView)findViewById(R.id.list);
-        deviceListAdapter = new BtDeviceListAdapter(this, deviceList);
+        deviceListAdapter = new BtDeviceListAdapter(this, deviceList, mBtA2dpConnectionManager );
         mListView.setAdapter(deviceListAdapter);
 
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -218,15 +215,8 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 MainActivity.this.setProgressBar(ActivityState.CONNECTED);
                 BtDevice device = (BtDevice)parent.getItemAtPosition(position);
-                if (device.mDevice.getBondState() != BluetoothDevice.BOND_BONDED)
-                    device.mDevice.createBond();
-                else {
-                    if (mBtA2dpConnectionManager!=null)
-                        mBtA2dpConnectionManager.disconnectBluetoothA2dp();
-                    if (mBtA2dpConnectionManager!=null)
-                        if (!device.deviceConnected)
-                            mBtA2dpConnectionManager.connectBluetoothA2dp(device.mDevice);
-                }
+                if (mBtA2dpConnectionManager!=null)
+                    mBtA2dpConnectionManager.toggleBluetoothA2dp(device.mDevice);
             }
         });
 
@@ -278,11 +268,12 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
                 {
                     if (device.getAddress().equals(listDevice.getAddress())) {
                         listDevice.deviceBonded = true;
+                        deviceListAdapter.notifyDataSetChanged();
                         if (mBtA2dpConnectionManager!=null) {
-                            mBtA2dpConnectionManager.disconnectBluetoothA2dp();
                             mBtA2dpConnectionManager.connectBluetoothA2dp(listDevice.mDevice);
                             break;
                         }
+
                     }
                 }
 
@@ -296,7 +287,6 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
 
         switch (event) {
             case CONNECTED:
-                Log.e(TAG,"A2dp Connected");
                 for (BtDevice listDevice : deviceList)
                 {
                     if (device.getAddress().equals(listDevice.getAddress())) {
@@ -308,7 +298,6 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
                 break;
 
             case DISCONNECTED:
-                Log.e(TAG,"A2dp Disconnected");
                 for (BtDevice listDevice : deviceList)
                 {
                     if (device.getAddress().equals(listDevice.getAddress())) {
