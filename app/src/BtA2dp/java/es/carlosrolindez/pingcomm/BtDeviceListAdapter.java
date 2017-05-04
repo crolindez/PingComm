@@ -34,6 +34,7 @@ class BtDeviceListAdapter extends BaseAdapter {
     private ImageView lockedButton = null;
 
     private final int mShortAnimationDuration;
+    private final int mLongAnimationDuration;
 
 	
 	public BtDeviceListAdapter(Context context, ArrayBtDevice deviceList, BtA2dpConnectionManager manager)
@@ -43,6 +44,7 @@ class BtDeviceListAdapter extends BaseAdapter {
         mContext = context;
         mA2dpManager = manager;
         mShortAnimationDuration = mContext.getResources().getInteger(android.R.integer.config_shortAnimTime);
+        mLongAnimationDuration = mContext.getResources().getInteger(android.R.integer.config_longAnimTime);
 	}
 	
 	@Override
@@ -153,32 +155,34 @@ class BtDeviceListAdapter extends BaseAdapter {
         if (layout==null) return;
 
         final RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) layout.getLayoutParams();
-        final int bottom = layout.getBottom();
+        final int right = layout.getRight();
 
-        ObjectAnimator moveUp = ObjectAnimator.ofInt(layout, "Bottom", -10);
+        ObjectAnimator moveUp = ObjectAnimator.ofInt(layout, "Left", right);
         moveUp.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 params.rightMargin = 0;
                 params.leftMargin = 0;
                 layout.setLayoutParams(params);
-                layout.setBottom(bottom);
+                layout.setRight(right);
                 if (btDevice!=null)
                     mBtDeviceList.remove(btDevice);
                 notifyDataSetChanged();
             }
         });
         moveUp.start();
-  /*
-        layout.animate()
+
+  /*      layout.animate()
+                .scaleX(0f)
                 .scaleY(0f)
-                .setDuration(mShortAnimationDuration)
+                .setDuration(mLongAnimationDuration)
                 .setListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         params.rightMargin = 0;
                         params.leftMargin = 0;
                         layout.setLayoutParams(params);
+                        layout.setScaleX(1f);
                         layout.setScaleY(1f);
                         if (btDevice!=null)
                             mBtDeviceList.remove(btDevice);

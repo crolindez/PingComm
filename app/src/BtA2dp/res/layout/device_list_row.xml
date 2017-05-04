@@ -48,9 +48,10 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
             android:background="@android:color/holo_orange_dark"
+            android:clickable="false"
+            android:padding="5dp"
             android:visibility="visible"
             app:srcCompat="@android:drawable/ic_menu_delete"
-            android:clickable="false"
             tools:ignore="ContentDescription" />
 
 
