@@ -1,5 +1,8 @@
 package es.carlosrolindez.pingcomm;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.view.LayoutInflater;
@@ -30,6 +33,8 @@ class BtDeviceListAdapter extends BaseAdapter {
     private RelativeLayout lockedLayout = null;
     private ImageView lockedButton = null;
 
+    private final int mShortAnimationDuration;
+
 	
 	public BtDeviceListAdapter(Context context, ArrayBtDevice deviceList, BtA2dpConnectionManager manager)
 	{
@@ -37,6 +42,7 @@ class BtDeviceListAdapter extends BaseAdapter {
 		inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mContext = context;
         mA2dpManager = manager;
+        mShortAnimationDuration = mContext.getResources().getInteger(android.R.integer.config_shortAnimTime);
 	}
 	
 	@Override
@@ -110,14 +116,12 @@ class BtDeviceListAdapter extends BaseAdapter {
     @Override
     public void notifyDataSetChanged() {
         if (lockedLayout!=null) {
-            RelativeLayout.LayoutParams lockedParams = (RelativeLayout.LayoutParams) lockedLayout.getLayoutParams();
-            lockedParams.rightMargin = 0;
-            lockedParams.leftMargin = 0;
-            lockedLayout.setLayoutParams(lockedParams);
+            restoreAnimatedLayout(lockedLayout);
             unlock();
         }
         super.notifyDataSetChanged();
     }
+
 
     private void unlock() {
         viewLocked = false;
@@ -125,6 +129,64 @@ class BtDeviceListAdapter extends BaseAdapter {
         lockedButton = null;
         lockedLayout = null;
     }
+
+    private void restoreAnimatedLayout(final RelativeLayout layout) {
+        if (layout==null) return;
+        final RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) layout.getLayoutParams();
+
+        layout.animate()
+                .translationX(params.rightMargin)
+                .setDuration(mShortAnimationDuration)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        params.rightMargin = 0;
+                        params.leftMargin = 0;
+                        layout.setLayoutParams(params);
+                        layout.setTranslationX(0);
+                    }
+                });
+    }
+
+    private void deleteAnimatedLayout(final RelativeLayout layout, final BtDevice btDevice) {
+
+        if (layout==null) return;
+
+        final RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) layout.getLayoutParams();
+        final int bottom = layout.getBottom();
+
+        ObjectAnimator moveUp = ObjectAnimator.ofInt(layout, "Bottom", -10);
+        moveUp.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                params.rightMargin = 0;
+                params.leftMargin = 0;
+                layout.setLayoutParams(params);
+                layout.setBottom(bottom);
+                if (btDevice!=null)
+                    mBtDeviceList.remove(btDevice);
+                notifyDataSetChanged();
+            }
+        });
+        moveUp.start();
+  /*
+        layout.animate()
+                .scaleY(0f)
+                .setDuration(mShortAnimationDuration)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        params.rightMargin = 0;
+                        params.leftMargin = 0;
+                        layout.setLayoutParams(params);
+                        layout.setScaleY(1f);
+                        if (btDevice!=null)
+                            mBtDeviceList.remove(btDevice);
+                        notifyDataSetChanged();
+                    }
+                });*/
+    }
+
 
     public class SwipeView implements View.OnTouchListener {
 
@@ -157,6 +219,8 @@ class BtDeviceListAdapter extends BaseAdapter {
             moveable = !device.deviceConnected;
         }
 
+
+
         private void lock() {
             viewLocked = true;
             numViewLocked = localPosition;
@@ -168,13 +232,9 @@ class BtDeviceListAdapter extends BaseAdapter {
                 public void onClick(View v) {
                     if (mA2dpManager!=null) {
                         mA2dpManager.unbondBluetoothA2dp(btDevice.mDevice);
-                        RelativeLayout.LayoutParams lockedParams = (RelativeLayout.LayoutParams) lockedLayout.getLayoutParams();
-                        lockedParams.rightMargin = 0;
-                        lockedParams.leftMargin = 0;
-                        lockedLayout.setLayoutParams(lockedParams);
+                        deleteAnimatedLayout(lockedLayout,btDevice);
                         unlock();
-                        mBtDeviceList.remove(btDevice);
-                        notifyDataSetChanged();
+
                     }
                 }
             });
@@ -189,10 +249,7 @@ class BtDeviceListAdapter extends BaseAdapter {
                 case MotionEvent.ACTION_DOWN:
                 {
                     if (viewLocked && (numViewLocked!=localPosition)) {  //undo lock
-                        RelativeLayout.LayoutParams lockedParams = (RelativeLayout.LayoutParams) lockedLayout.getLayoutParams();
-                        lockedParams.rightMargin = 0;
-                        lockedParams.leftMargin = 0;
-                        lockedLayout.setLayoutParams(lockedParams);
+                        restoreAnimatedLayout(lockedLayout);
                         unlock();
                     }
                     mDownX = motionEvent.getRawX();
@@ -248,16 +305,12 @@ class BtDeviceListAdapter extends BaseAdapter {
 
                     if (motionInterceptDisallowed) {
                         if (!viewLocked) {
-                            params.rightMargin = 0;
-                            params.leftMargin = 0;
-                            mainLayout.setLayoutParams(params);
+                            restoreAnimatedLayout(mainLayout);
                         }
                         mListView.requestDisallowInterceptTouchEvent(false);
                         motionInterceptDisallowed = false;
                     } else {
-                        params.rightMargin = 0;
-                        params.leftMargin = 0;
-                        mainLayout.setLayoutParams(params);
+                        restoreAnimatedLayout(mainLayout);
                         unlock();
                         if (mA2dpManager!=null)
                             mA2dpManager.toggleBluetoothA2dp(btDevice.mDevice);
@@ -269,9 +322,7 @@ class BtDeviceListAdapter extends BaseAdapter {
 
                 case MotionEvent.ACTION_CANCEL:
                 {
-                    params.rightMargin = 0;
-                    params.leftMargin = 0;
-                    mainLayout.setLayoutParams(params);
+                    restoreAnimatedLayout(mainLayout);
                     unlock();
                     mListView.requestDisallowInterceptTouchEvent(false);
                     motionInterceptDisallowed = false;
