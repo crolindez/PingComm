@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Typeface;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -89,9 +90,13 @@ class BtDeviceListAdapter extends BaseAdapter {
 
 		TextView deviceName = (TextView)localView.findViewById(R.id.device_name);
 		TextView deviceAddress = (TextView)localView.findViewById(R.id.device_address);
+        ImageView bluetoothIcon = (ImageView) localView.findViewById(R.id.bluetooth_icon);
+        AnimatedVectorDrawable animatedBluetooth= (AnimatedVectorDrawable) mContext.getDrawable(R.drawable.animated_bluetooth);
+
 		RelativeLayout mainLayout = (RelativeLayout)localView.findViewById(R.id.device_list_layout);
 		deviceName.setText(device.deviceName);
 		deviceAddress.setText(device.getAddress());
+
 
         if (device.deviceConnected) {
             mainLayout.setBackgroundResource(R.drawable.connected_selector);
@@ -105,6 +110,16 @@ class BtDeviceListAdapter extends BaseAdapter {
                 deviceAddress.setTypeface(Typeface.DEFAULT);
             }
         }
+        if (device.getDeviceInProcess()) {
+            bluetoothIcon.setVisibility(View.VISIBLE);
+            bluetoothIcon.setImageDrawable(animatedBluetooth);
+            animatedBluetooth.start();
+        }
+        else {
+            bluetoothIcon.setVisibility(View.INVISIBLE);
+            animatedBluetooth.stop();
+        }
+
 
         ImageView deleteButton = (ImageView) localView.findViewById(R.id.device_delete);
         RelativeLayout deleteLayout = (RelativeLayout)localView.findViewById(R.id.delete_list_layout);

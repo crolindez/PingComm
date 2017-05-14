@@ -229,7 +229,11 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
         BtDevice newDevice = new BtDevice(name,device);
 
         for (BtDevice listDevice : deviceList)
-            if (listDevice.getAddress().equals(newDevice.getAddress())) return;
+            if (listDevice.getAddress().equals(newDevice.getAddress())) {
+                deviceListAdapter.notifyDataSetChanged();
+                listDevice.deviceName = name;
+                return;
+            }
 
         deviceList.addSorted(newDevice);
         deviceListAdapter.notifyDataSetChanged();
@@ -241,27 +245,20 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
                 setProgressBar(ActivityState.NOT_SCANNING);
                 break;
 
-            case CONNECTED:
-/*
+/*            case CONNECTED:
+            case DISCONNECTED:
+
                 for (BtDevice listDevice : deviceList)
                 {
                     if (device.getAddress().equals(listDevice.getAddress())) {
-                        listDevice.deviceConnected = true;
+                        listDevice.setDeviceInProcess(false);
                         break;
                     }
                 }
-                deviceListAdapter.notifyDataSetChanged();*/
-                break;
+                deviceListAdapter.notifyDataSetChanged();
+                break;*/
 
-            case DISCONNECTED:
-  /*              for (BtDevice listDevice : deviceList) {
-                    if (device.getAddress().equals(listDevice.getAddress())) {
-                        listDevice.deviceConnected = false;
-                        break;
-                    }
-                }
-                deviceListAdapter.notifyDataSetChanged();*/
-                break;
+
 
             case BONDED:
                 for (BtDevice listDevice : deviceList)
@@ -271,12 +268,26 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
                         deviceListAdapter.notifyDataSetChanged();
                         if (mBtA2dpConnectionManager!=null) {
                             mBtA2dpConnectionManager.connectBluetoothA2dp(listDevice.mDevice);
-                            break;
                         }
-
+                        else {
+                            listDevice.setDeviceInProcess(false);
+                        }
+                        break;
                     }
                 }
+                deviceListAdapter.notifyDataSetChanged();
+                break;
 
+            case CHANGING:
+                for (BtDevice listDevice : deviceList)
+                {
+                    if (device.getAddress().equals(listDevice.getAddress())) {
+                        listDevice.deviceConnected = false;
+                        listDevice.setDeviceInProcess(true);
+                        break;
+                    }
+                }
+                deviceListAdapter.notifyDataSetChanged();
                 break;
 
         }
@@ -291,6 +302,7 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
                 {
                     if (device.getAddress().equals(listDevice.getAddress())) {
                         listDevice.deviceConnected = true;
+                        listDevice.setDeviceInProcess(false);
                         break;
                     }
                 }
@@ -302,6 +314,19 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
                 {
                     if (device.getAddress().equals(listDevice.getAddress())) {
                         listDevice.deviceConnected = false;
+                        listDevice.setDeviceInProcess(false);
+                        break;
+                    }
+                }
+                deviceListAdapter.notifyDataSetChanged();
+                break;
+
+            case CHANGING:
+                for (BtDevice listDevice : deviceList)
+                {
+                    if (device.getAddress().equals(listDevice.getAddress())) {
+                        listDevice.deviceConnected = false;
+                        listDevice.setDeviceInProcess(true);
                         break;
                     }
                 }
