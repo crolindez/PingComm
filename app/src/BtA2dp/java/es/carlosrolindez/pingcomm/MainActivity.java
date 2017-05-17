@@ -245,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
                 setProgressBar(ActivityState.NOT_SCANNING);
                 break;
 
-/*            case CONNECTED:
+/*            case CONNECTED:*/
             case DISCONNECTED:
 
                 for (BtDevice listDevice : deviceList)
@@ -256,7 +256,7 @@ public class MainActivity extends AppCompatActivity implements BtListenerManager
                     }
                 }
                 deviceListAdapter.notifyDataSetChanged();
-                break;*/
+                break;
 
 
 

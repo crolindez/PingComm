@@ -227,7 +227,7 @@ public class BtA2dpConnectionManager {
                     if (headsetProxy != null) {
                         device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                         disconnectBluetoothHeadset(device);
-                        mBtA2dProxyListener.notifyBtA2dpEvent(device, BtA2dpEvent.CONNECTED);
+ //                       mBtA2dProxyListener.notifyBtA2dpEvent(device, BtA2dpEvent.CONNECTED);
                     }
                     break;
                 }

@@ -120,13 +120,18 @@ public class BtListenerManager extends RfListenerManager<BluetoothDevice,BtListe
                     case BluetoothDevice.BOND_BONDED:
                         if (mRfListener != null) {
                             mRfListener.notifyRfEvent(device, BtEvent.BONDED);
-                            break;
                         }
+                        break;
                     case BluetoothDevice.BOND_BONDING:
                         if (mRfListener != null) {
                             mRfListener.notifyRfEvent(device, BtEvent.CHANGING);
-                            break;
                         }
+                        break;
+                    case BluetoothDevice.BOND_NONE:
+                        if (mRfListener != null) {
+                            mRfListener.notifyRfEvent(device, BtEvent.DISCONNECTED);
+                        }
+                        break;
                 }
             }
         }
